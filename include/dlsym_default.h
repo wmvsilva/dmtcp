@@ -60,7 +60,11 @@ void *dlsym_default(void *handle, const char *symbol);
   ({                                                                        \
      static __typeof__(&func) _real_##func = (__typeof__(&func)) -1;        \
      if (_real_##func == (__typeof__(&func)) -1) {                          \
+<<<<<<< 669bfaa0bbae8de3516152ef8f6c6c5a9d9cc92a
        if (dmtcp_initialize) dmtcp_initialize();                            \
+=======
+       if (dmtcp_prepare_wrappers) dmtcp_prepare_wrappers();                \
+>>>>>>> Fix dlsym_default to not rely on dlsym and dlopen
        _real_##func = (__typeof__(&func)) dlsym_default(RTLD_NEXT, #func);  \
      }                                                                      \
    _real_##func;})
