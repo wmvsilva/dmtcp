@@ -316,43 +316,37 @@ void *dlsym_default_internal_flag_handler(void* handle, const char* symbol, void
 {
   Dl_info info;
   void* extra_info;
+  void* result;
 
   // Retrieve the link_map for the library given by addr
   int ret = dladdr1(addr, &info, &extra_info, RTLD_DL_LINKMAP);
-  if (!ret)
-  {
-    printf("dladdr1 could not find shared object for address\n");
+  if (!ret) {
+    JTRACE("dladdr1 could not find shared object for address\n");
     return NULL;
   }
 
   struct link_map* map = (struct link_map*) extra_info;
 
   // Handle RTLD_DEFAULT starts search at first loaded object
-  if (handle == RTLD_DEFAULT)
-  {
-    while (map->l_prev)
-    {
+  if (handle == RTLD_DEFAULT) {
+    while (map->l_prev) {
       // Rewinding to search by load order
       map = map->l_prev;
     }
   }	
 
   // Handle RTLD_NEXT starts search after current library
-  if (handle == RTLD_NEXT)
-  {
+  if (handle == RTLD_NEXT) {
     // Skip current library
-    if (!map->l_next)
-    {
-      printf("There are no libraries after the current library.\n");
+    if (!map->l_next) {
+      JTRACE("There are no libraries after the current library.\n");
       return NULL;
     }
     map = map->l_next;
   }
-  void* result;
 
   // Search through libraries until end of list is reached or symbol is found.
-  while (1)
-  {
+  while (1) {
     // printf("l_name: %s\n", map->l_name);
     // Running dlsym_default_internal on the linux-vdso library will
     // cause a segfault. Because it may have different versions on
@@ -368,11 +362,9 @@ void *dlsym_default_internal_flag_handler(void* handle, const char* symbol, void
       map->l_name[6] == 'v' &&
       map->l_name[7] == 'd' &&
       map->l_name[8] == 's' &&
-      map->l_name[9] == 'o')
-    {
-			if (!map->l_next)
-      {
-        printf("No more libraries to search.\n");
+      map->l_name[9] == 'o') {
+			if (!map->l_next) {
+        JTRACE("No more libraries to search.\n");
         return NULL;
       }	
       // Change link map to next library
@@ -382,14 +374,12 @@ void *dlsym_default_internal_flag_handler(void* handle, const char* symbol, void
 
     // Search current library
     result = dlsym_default_internal_library_handler((void*) map, symbol, tags_p, default_symbol_index_p);
-    if (result)
-    {
+    if (result) {
       return result;
     }
 
     // Check if next library exists
-    if (!map->l_next)
-    {
+    if (!map->l_next) {
       //printf("No more libraries to search.\n");
       return NULL;
     }
@@ -399,7 +389,7 @@ void *dlsym_default_internal_flag_handler(void* handle, const char* symbol, void
 }
 
 // Produces an error message and hard fails if no default_symbol was found.
-void process_results(dt_tag tags, Elf32_Word default_symbol_index,
+void print_debug_messages(dt_tag tags, Elf32_Word default_symbol_index,
                       const char *symbol)
 {
 #ifdef VERBOSE
@@ -413,7 +403,6 @@ void process_results(dt_tag tags, Elf32_Word default_symbol_index,
   if (!default_symbol_index) {
     printf("ERROR:  No default symbol version found for %s.\n"
            "        Extend code to look for hidden symbols?\n", symbol);
-    assert(0);
   }
 }
 
@@ -431,12 +420,12 @@ void *dlsym_default(void *handle, const char*symbol) {
   // Search for symbol using given pseudo-handle order
   void *result = dlsym_default_internal_flag_handler(handle, symbol, return_address,
                                                       &tags, &default_symbol_index);
-  process_results(tags, default_symbol_index, symbol);
+  print_debug_messages(tags, default_symbol_index, symbol);
   return result;
   }
 #endif
 
   void *result = dlsym_default_internal_library_handler(handle, symbol, &tags, &default_symbol_index);
-  process_results(tags, default_symbol_index, symbol);
+  print_debug_messages(tags, default_symbol_index, symbol);
   return result;
 }
