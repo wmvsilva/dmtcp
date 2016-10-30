@@ -321,7 +321,7 @@ void *dlsym_default_internal_flag_handler(void* handle, const char* symbol, void
   // Retrieve the link_map for the library given by addr
   int ret = dladdr1(addr, &info, &extra_info, RTLD_DL_LINKMAP);
   if (!ret) {
-    JTRACE("dladdr1 could not find shared object for address\n");
+    printf("dladdr1 could not find shared object for address\n");
     return NULL;
   }
 
@@ -339,7 +339,7 @@ void *dlsym_default_internal_flag_handler(void* handle, const char* symbol, void
   if (handle == RTLD_NEXT) {
     // Skip current library
     if (!map->l_next) {
-      JTRACE("There are no libraries after the current library.\n");
+      printf("There are no libraries after the current library.\n");
       return NULL;
     }
     map = map->l_next;
@@ -364,7 +364,7 @@ void *dlsym_default_internal_flag_handler(void* handle, const char* symbol, void
       map->l_name[8] == 's' &&
       map->l_name[9] == 'o') {
 			if (!map->l_next) {
-        JTRACE("No more libraries to search.\n");
+        printf("No more libraries to search.\n");
         return NULL;
       }	
       // Change link map to next library
